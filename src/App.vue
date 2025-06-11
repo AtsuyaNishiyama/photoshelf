@@ -1,13 +1,15 @@
 <script setup>
-import { currentUser } from './stores/user'
+import { currentUser , isAuthReady } from './stores/user'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from './firebase'
+import  Signup  from './components/Signup.vue'
 import { signOut } from 'firebase/auth'
 import { ref } from 'vue'
 
 const email = ref('')
 const password = ref('')
 const error = ref('')
+const isSignup = ref(false)
 
 const login = async () => {
   error.value = ''
@@ -28,9 +30,23 @@ const logout = async () => {
   <main class="min-h-screen flex items-center justify-center bg-gray-100">
     <div class="bg-white p-6 rounded shadow max-w-sm w-full text-center">
       <h1 class="text-2xl font-bold mb-4">📷 Photoshelf</h1>
+      
+      <!-- ログイン状態がまだ取得されていないとき（初期状態） -->
+      <!-- Firebase Auth の状態がまだ取得できていない時-->
+      <div v-if="!isAuthReady">
+        <p>読み込み中...</p>
+      </div>
+
+      <!-- サインアップ画面表示中 -->
+      <!-- アカウントをお持ちでない方はこちらのボタンをクリック＆ログイン状態ではない-->
+      <div v-else-if="!currentUser && isSignup">
+        <Signup />
+        <p><button @click="isSignup = false" class="text-blue-600 underline text-sm mt-4">ログインに戻る</button></p>
+      </div>
 
       <!-- ログインしていないとき -->
-      <div v-if="!currentUser">
+      <!-- Firebase Auth　の状態が取得できてから最初に開くところ-->
+      <div v-else-if="!currentUser">
         <form @submit.prevent="login" class="space-y-4">
           <input
             v-model="email"
@@ -51,6 +67,7 @@ const logout = async () => {
             ログイン
           </button>
         </form>
+        <p><button @click="isSignup = true" class="text-blue-600 underline text-sm mt-4">アカウントをお持ちでない方はこちら</button></p>
         <p v-if="error" class="text-red-500 mt-2">{{ error }}</p>
       </div>
 
