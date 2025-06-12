@@ -2,14 +2,16 @@
 import { currentUser , isAuthReady } from './stores/user'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from './firebase'
-import  Signup  from './components/Signup.vue'
 import { signOut } from 'firebase/auth'
 import { ref } from 'vue'
+import  Signup  from './components/Signup.vue'
+import PhotoFormModal from './components/PhotoFormModal.vue'
 
 const email = ref('')
 const password = ref('')
 const error = ref('')
 const isSignup = ref(false)
+const showModal = ref(false)
 
 const login = async () => {
   error.value = ''
@@ -70,10 +72,20 @@ const logout = async () => {
         <p><button @click="isSignup = true" class="text-blue-600 underline text-sm mt-4">アカウントをお持ちでない方はこちら</button></p>
         <p v-if="error" class="text-red-500 mt-2">{{ error }}</p>
       </div>
+      <!-- ログインしていないとき -->
 
       <!-- ログイン済みのとき -->
       <div v-else>
         <p class="mb-4">ログイン中：{{ currentUser.email }}</p>
+        <button
+          @click="showModal = true"
+          class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mt-4"
+        >
+          画像を登録する
+        </button>
+
+        <PhotoFormModal v-if="showModal" @close="showModal = false" />
+
         <button
           @click="logout"
           class="w-full bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
@@ -81,6 +93,7 @@ const logout = async () => {
           ログアウト
         </button>
       </div>
+      <!-- ログイン済みのとき -->
     </div>
   </main>
 </template>
