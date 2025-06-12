@@ -27,11 +27,14 @@
 import { ref } from 'vue'
 import { storage } from '../firebase'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { db } from '../firebase'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 
 const file = ref(null)
 const uploading = ref(false)
 const error = ref('')
 const emit = defineEmits(['close'])
+
 
 const handleFileChange = (e) => {
   file.value = e.target.files[0]
@@ -54,9 +57,14 @@ const handleCreatePhoto = async () => {
     const imageRef = storageRef(storage, path)
     await uploadBytes(imageRef, file.value)
     const url = await getDownloadURL(imageRef)
-    console.log('✅ アップロード成功:', url)
 
-    //uploadintの値をfalse・fileの値をnull・errorの値を空にする=>初期値に戻す
+    // Firestore に画像情報を保存
+    await addDoc(collection(db, 'photos'), {
+      imageUrl: url,
+      createdAt: serverTimestamp()
+    })
+
+    //uploadingの値をfalse・fileの値をnull・errorの値を空にする=>初期値に戻す
     uploading.value = false
     file.value = null
     error.value = ''
@@ -65,7 +73,9 @@ const handleCreatePhoto = async () => {
   } catch (err) {
     console.error(err)
     error.value = 'アップロードに失敗しました'
+  } finally {
     uploading.value = false
+    file.value = null
   }
 }
 </script>

@@ -6,6 +6,7 @@ import { signOut } from 'firebase/auth'
 import { ref } from 'vue'
 import  Signup  from './components/Signup.vue'
 import PhotoFormModal from './components/PhotoFormModal.vue'
+import PhotoList from './components/PhotoList.vue'
 
 const email = ref('')
 const password = ref('')
@@ -96,6 +97,9 @@ const logout = async () => {
       <!-- ログイン済みのとき -->
     </div>
   </main>
+
+   <PhotoList v-if="currentUser" />
+
 </template>
 
 <style>
