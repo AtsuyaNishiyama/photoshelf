@@ -6,6 +6,7 @@
         alt="uploaded"
         class="w-full h-24 object-cover rounded"
       />
+      <p class="text-sm text-gray-700 break-words">{{ photo.description }}</p>
       <button
         @click="deletePhoto(photo)"
         class="mt-2 w-full bg-red-500 text-white py-1 rounded hover:bg-red-600"

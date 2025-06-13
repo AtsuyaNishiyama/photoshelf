@@ -5,6 +5,13 @@
 
       <input type="file" accept="image/*" @change="handleFileChange" class="mb-4" />
 
+      <textarea
+        v-model="description"
+        placeholder="説明文を入力してください"
+        class="w-full p-2 border rounded mt-4"
+        rows="2"
+      />
+
       <!-- -->
       <div class="flex justify-end space-x-2">
         <!-- クリックすると親コンポーネントにcloseを伝える=>ポップアップ画面が閉じるようになる-->
@@ -33,6 +40,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 const file = ref(null)
 const uploading = ref(false)
 const error = ref('')
+const description = ref('')
 const emit = defineEmits(['close'])
 
 
@@ -62,6 +70,7 @@ const handleCreatePhoto = async () => {
     await addDoc(collection(db, 'photos'), {
       imageUrl: url,
       imagePath: path, // FirestorageのURLを保存
+      description: description.value, 
       createdAt: serverTimestamp()
     })
 
@@ -77,6 +86,7 @@ const handleCreatePhoto = async () => {
   } finally {
     uploading.value = false
     file.value = null
+    description.value = ''
   }
 }
 </script>
