@@ -6,6 +6,12 @@
         alt="uploaded"
         class="w-full h-24 object-cover rounded"
       />
+      <button
+        @click="deletePhoto(photo)"
+        class="mt-2 w-full bg-red-500 text-white py-1 rounded hover:bg-red-600"
+      >
+        削除
+      </button>
     </div>
   </div>
 </template>
@@ -14,7 +20,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { db } from '../firebase'
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc  } from 'firebase/firestore'
+import { deleteObject, ref as storageRef, getStorage } from 'firebase/storage'
 
 const photos = ref([])
 
@@ -39,4 +46,25 @@ onMounted(() => {
 onUnmounted(() => {
   if (unsubscribe) unsubscribe()
 })
+
+//削除ボタンがクリックされると実行される関数
+const deletePhoto = async (photo) => {
+  //削除実行前の確認
+  const ok = window.confirm('この画像を削除してもよろしいですか？')
+  if (!ok) return
+
+  try {
+    // Firestorage の画像を削除
+    if (photo.imagePath) {
+      const storage = getStorage() //Firestorageの情報（インスタンス）を取得
+      const imageRef = storageRef(storage, photo.imagePath) //削除する画像のFirestorage内のファイルパス（参照先）を作成
+      await deleteObject(imageRef) //参照先を引数に削除の実行
+    }
+
+    // Firestore のドキュメントを削除
+    await deleteDoc(doc(db, 'photos', photo.id))
+  } catch (err) {
+    console.error('削除に失敗しました', err)
+  }
+}
 </script>

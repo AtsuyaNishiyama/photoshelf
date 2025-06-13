@@ -61,6 +61,7 @@ const handleCreatePhoto = async () => {
     // Firestore に画像情報を保存
     await addDoc(collection(db, 'photos'), {
       imageUrl: url,
+      imagePath: path, // FirestorageのURLを保存
       createdAt: serverTimestamp()
     })
 
