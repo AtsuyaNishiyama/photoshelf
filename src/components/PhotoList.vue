@@ -7,6 +7,7 @@
         class="w-full h-24 object-cover rounded"
       />
       <p class="text-sm text-gray-700 break-words">{{ photo.description }}</p>
+      <button @click="editPhoto = photo" class="text-blue-500 text-sm underline">編集</button>
       <button
         @click="deletePhoto(photo)"
         class="mt-2 w-full bg-red-500 text-white py-1 rounded hover:bg-red-600"
@@ -15,6 +16,12 @@
       </button>
     </div>
   </div>
+  <!-- 編集モーダルの表示 -->
+  <PhotoEditModal
+    v-if="editPhoto"
+    :photo="editPhoto"
+    @close="editPhoto = null"
+  />
 </template>
 
 
@@ -23,8 +30,10 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { db } from '../firebase'
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc  } from 'firebase/firestore'
 import { deleteObject, ref as storageRef, getStorage } from 'firebase/storage'
+import PhotoEditModal from './PhotoEditModal.vue'
 
 const photos = ref([])
+const editPhoto = ref(null)
 
 //photosを参照して、作成（createdAt）が新しい順に並べる
 const q = query(collection(db, 'photos'), orderBy('createdAt', 'desc'))
