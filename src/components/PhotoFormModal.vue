@@ -12,6 +12,13 @@
         rows="2"
       />
 
+      <input
+        v-model="address"
+        type="text"
+        placeholder="住所を入力してください"
+        class="w-full p-2 border rounded mt-4"
+      />
+
       <!-- -->
       <div class="flex justify-end space-x-2">
         <!-- クリックすると親コンポーネントにcloseを伝える=>ポップアップ画面が閉じるようになる-->
@@ -42,6 +49,33 @@ const uploading = ref(false)
 const error = ref('')
 const description = ref('')
 const emit = defineEmits(['close'])
+const address = ref('')
+
+
+//APIキーの取得
+const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+
+
+const getCoordinatesFromAddress = async (addressText) => {
+
+  //  TODO: Google Maps APIキーをCloud Functions経由に切り替える
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${GOOGLE_API_KEY}`
+
+  //Google Maps API に住所を送って、返ってきた生データをresと定義
+  const res = await fetch(url)
+  //生データをJSON形式に変換
+  const data = await res.json()
+
+  console.log('住所変換APIレスポンス:', data) 
+
+  if (data.status === 'OK') {
+    //JSONデータの一番目の.geometry.locationをlocationで定義
+    const location = data.results[0].geometry.location
+    return location // { lat: ..., lng: ... }
+  } else {
+    throw new Error('住所の変換に失敗しました')
+  }
+}
 
 
 const handleFileChange = (e) => {
@@ -65,12 +99,15 @@ const handleCreatePhoto = async () => {
     const imageRef = storageRef(storage, path)
     await uploadBytes(imageRef, file.value)
     const url = await getDownloadURL(imageRef)
+    const location = await getCoordinatesFromAddress(address.value)
 
     // Firestore に画像情報を保存
     await addDoc(collection(db, 'photos'), {
       imageUrl: url,
       imagePath: path, // FirestorageのURLを保存
       description: description.value, 
+      address: address.value,
+      location,
       createdAt: serverTimestamp()
     })
 
@@ -89,4 +126,5 @@ const handleCreatePhoto = async () => {
     description.value = ''
   }
 }
+
 </script>

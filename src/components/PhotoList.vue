@@ -7,6 +7,15 @@
         class="w-full h-24 object-cover rounded"
       />
       <p class="text-sm text-gray-700 break-words">{{ photo.description }}</p>
+
+      <a
+        :href="`https://www.google.com/maps/search/?api=1&query=${photo.location.lat},${photo.location.lng}`"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {{ photo.address }}
+      </a>
+
       <button @click="editPhoto = photo" class="text-blue-500 text-sm underline">編集</button>
       <button
         @click="deletePhoto(photo)"
