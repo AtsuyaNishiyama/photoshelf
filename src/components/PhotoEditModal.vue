@@ -19,6 +19,13 @@
           rows="3"
       />
 
+      <input
+        v-model="newAddress"
+        type="text"
+        placeholder="住所を編集"
+        class="w-full p-2 border rounded mb-4"
+      />
+
       <div class="flex justify-end space-x-2">
         <button @click="$emit('close')" class="px-4 py-2 bg-gray-300 rounded">キャンセル</button>
         <button @click="updatePhoto" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
@@ -48,6 +55,7 @@ const emit = defineEmits(['close'])
 
 //親コンポーネントから受け取ったdescriptionの値もしくを定義・編集画面の入力画面に表示させたり・説明文をFirestoreを更新する際の利用
 const newDescription = ref(props.photo.description || '')
+const newAddress = ref(props.photo.address || '')
 const successMessage = ref('')
 const errorMessage = ref('')
 const newFile = ref(null)
@@ -58,6 +66,20 @@ newFile.value = e.target.files[0]
 console.log('選択されたファイル:', newFile.value)
 }
 
+//住所の編集機能
+const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+
+const getCoordinatesFromAddress = async (addressText) => {
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${GOOGLE_API_KEY}`
+  const res = await fetch(url)
+  const data = await res.json()
+  if (data.status === 'OK') {
+    return data.results[0].geometry.location // { lat: ..., lng: ... }
+  } else {
+    throw new Error('住所の変換に失敗しました')
+  }
+}
+
 //編集ボタンをクリックした際、実行される関数
 const updatePhoto = async () => {
   successMessage.value = ''
@@ -65,8 +87,16 @@ const updatePhoto = async () => {
 
   try {
     const photoRef = doc(db, 'photos', props.photo.id)
-    const updatedData = { description: newDescription.value }
+    const updatedData = { 
+      description: newDescription.value,
+      address: newAddress.value,
+    }
 
+    //編集で入力した値と元の値が異なるなら実行
+    if (newAddress.value !== props.photo.address) {
+      const location = await getCoordinatesFromAddress(newAddress.value)
+      updatedData.location = location
+    }
 
     // 新しい画像が選択されていれば実行
     if (newFile.value) {
