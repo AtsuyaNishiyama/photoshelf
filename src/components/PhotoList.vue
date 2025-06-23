@@ -14,6 +14,11 @@
         </span>
       </div>
 
+      <p class="text-sm text-gray-600">
+        撮影日:
+        {{ photo.shootingDate ? photo.shootingDate.toLocaleDateString() : '未登録' }}
+      </p>
+
       <a
         :href="`https://www.google.com/maps/search/?api=1&query=${photo.location.lat},${photo.location.lng}`"
         target="_blank"
@@ -61,12 +66,17 @@ onMounted(() => {
   //Firestoreのドキュメントであるphotosに変化があった際、自動で実行される
   unsubscribe = onSnapshot(q, (snapshot) => {
     //再度photosの値を再代入する
-    photos.value = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }))
-  })
-})
+    photos.value = snapshot.docs.map(doc => {
+      const data = doc.data();
+
+      return {
+        id: doc.id,
+        ...data,
+        shootingDate: data.shootingDate?.toDate?.() ?? null
+      };
+    });
+  });  
+ })
 
 onUnmounted(() => {
   if (unsubscribe) unsubscribe()

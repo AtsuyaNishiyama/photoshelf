@@ -16,6 +16,12 @@
         </span>
       </div>
 
+      <input
+        type="date"
+        v-model="shootingDate"
+        class="w-full p-2 border rounded"
+      />
+
       <textarea
         v-model="description"
         placeholder="説明文を入力してください"
@@ -62,6 +68,8 @@ const description = ref('')
 const emit = defineEmits(['close'])
 const address = ref('')
 const rating = ref(5) 
+const shootingDate = ref(null) 
+
 
 
 //APIキーの取得
@@ -120,6 +128,7 @@ const handleCreatePhoto = async () => {
       description: description.value, 
       address: address.value,
       location,
+      shootingDate: shootingDate.value ? new Date(shootingDate.value) : null,
       rating: rating.value, 
       createdAt: serverTimestamp()
     })

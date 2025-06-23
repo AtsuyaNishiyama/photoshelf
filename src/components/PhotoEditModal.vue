@@ -26,6 +26,12 @@
         </div>
       </div>
 
+      <input
+        type="date"
+        v-model="newShootingDate"
+        class="w-full p-2 border rounded mb-4"
+      />
+
       <textarea
           v-model="newDescription"
           placeholder="説明文を編集"
@@ -74,11 +80,22 @@ const successMessage = ref('')
 const errorMessage = ref('')
 const newFile = ref(null)
 const newRating = ref(props.photo.rating || 5)
+const newShootingDate = ref('')
 
 //「画像ファイルが選択されたとき」に実行
 const handleFileChange = (e) => {
 newFile.value = e.target.files[0]
 console.log('選択されたファイル:', newFile.value)
+}
+
+if (props.photo.shootingDate instanceof Date) {
+  newShootingDate.value = props.photo.shootingDate.toISOString().slice(0, 10)
+} else if (
+  props.photo.shootingDate &&
+  typeof props.photo.shootingDate.toDate === 'function'
+) {
+  const dateObj = props.photo.shootingDate.toDate()
+  newShootingDate.value = dateObj.toISOString().slice(0, 10)
 }
 
 //住所の編集機能
@@ -106,6 +123,7 @@ const updatePhoto = async () => {
       description: newDescription.value,
       address: newAddress.value,
       rating: newRating.value,
+      shootingDate: newShootingDate.value ? new Date(newShootingDate.value) : null,
     }
 
     //編集で入力した値と元の値が異なるなら実行・緯度と経度の更新
