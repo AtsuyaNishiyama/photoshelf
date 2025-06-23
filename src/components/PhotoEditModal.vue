@@ -12,6 +12,20 @@
           class="mb-4"
       />
 
+      <div class="mb-4">
+        <p class="text-sm font-semibold mb-1">評価（1〜5）</p>
+        <div class="text-yellow-500 text-xl">
+          <span
+            v-for="n in 5"
+            :key="n"
+            class="cursor-pointer"
+            @click="newRating = n"
+          >
+            {{ n <= newRating ? '★' : '☆' }}
+          </span>
+        </div>
+      </div>
+
       <textarea
           v-model="newDescription"
           placeholder="説明文を編集"
@@ -59,6 +73,7 @@ const newAddress = ref(props.photo.address || '')
 const successMessage = ref('')
 const errorMessage = ref('')
 const newFile = ref(null)
+const newRating = ref(props.photo.rating || 5)
 
 //「画像ファイルが選択されたとき」に実行
 const handleFileChange = (e) => {
@@ -90,9 +105,10 @@ const updatePhoto = async () => {
     const updatedData = { 
       description: newDescription.value,
       address: newAddress.value,
+      rating: newRating.value,
     }
 
-    //編集で入力した値と元の値が異なるなら実行
+    //編集で入力した値と元の値が異なるなら実行・緯度と経度の更新
     if (newAddress.value !== props.photo.address) {
       const location = await getCoordinatesFromAddress(newAddress.value)
       updatedData.location = location

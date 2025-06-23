@@ -8,6 +8,12 @@
       />
       <p class="text-sm text-gray-700 break-words">{{ photo.description }}</p>
 
+      <div class="text-yellow-500 text-sm">
+        <span v-for="n in 5" :key="n">
+          {{ n <= photo.rating ? '★' : '☆' }}
+        </span>
+      </div>
+
       <a
         :href="`https://www.google.com/maps/search/?api=1&query=${photo.location.lat},${photo.location.lng}`"
         target="_blank"

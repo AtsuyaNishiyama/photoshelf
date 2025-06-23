@@ -5,6 +5,17 @@
 
       <input type="file" accept="image/*" @change="handleFileChange" class="mb-4" />
 
+      <div class="flex items-center space-x-1 mt-4">
+        <span
+          v-for="n in 5"
+          :key="n"
+          @click="rating = n"
+          class="cursor-pointer text-2xl"
+        >
+          {{ n <= rating ? '★' : '☆' }}
+        </span>
+      </div>
+
       <textarea
         v-model="description"
         placeholder="説明文を入力してください"
@@ -50,6 +61,7 @@ const error = ref('')
 const description = ref('')
 const emit = defineEmits(['close'])
 const address = ref('')
+const rating = ref(5) 
 
 
 //APIキーの取得
@@ -108,6 +120,7 @@ const handleCreatePhoto = async () => {
       description: description.value, 
       address: address.value,
       location,
+      rating: rating.value, 
       createdAt: serverTimestamp()
     })
 
