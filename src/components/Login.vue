@@ -1,5 +1,6 @@
 <template>
   <div class="max-w-sm mx-auto mt-10 p-6 bg-white rounded shadow">
+    
     <h2 class="text-2xl mb-4">ログイン</h2>
     <form @submit.prevent="login">
       <input v-model="email" type="email" placeholder="メールアドレス" class="input mb-2" />

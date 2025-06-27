@@ -1,48 +1,63 @@
 <template>
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
-    <div v-for="photo in photos" :key="photo.id" class="rounded shadow">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+    <div v-for="photo in photos" :key="photo.id" class="rounded shadow relative">
+      <!-- 画像部分 -->
       <img
         :src="photo.imageUrl"
         alt="uploaded"
-        class="w-full h-24 object-cover rounded"
+        class="w-full h-40 object-cover rounded"
       />
-      <p class="text-sm text-gray-700 break-words">{{ photo.description }}</p>
 
-      <div class="text-yellow-500 text-sm">
-        <span v-for="n in 5" :key="n">
-          {{ n <= photo.rating ? '★' : '☆' }}
-        </span>
-      </div>
-
-      <p class="text-sm text-gray-600">
-        撮影日:
-        {{ photo.shootingDate ? photo.shootingDate.toLocaleDateString() : '未登録' }}
-      </p>
-
+      <!-- 右上にGoogle MapsのSVGピンアイコン（pin.svg） -->
       <a
         :href="`https://www.google.com/maps/search/?api=1&query=${photo.location.lat},${photo.location.lng}`"
         target="_blank"
         rel="noopener noreferrer"
+        class="absolute top-2 right-2 bg-white p-0.5 rounded-full shadow-md hover:bg-gray-200"
       >
-        {{ photo.address }}
+        <!-- pin.svg を表示 -->
+        <img src="/pin.svg" alt="Map Pin" class="w-3 h-3 text-red-500" />
       </a>
 
-      <button @click="editPhoto = photo" class="text-blue-500 text-sm underline">編集</button>
+      <!-- ゴミ箱アイコン（マップアイコンの下に追加） -->
       <button
         @click="deletePhoto(photo)"
-        class="mt-2 w-full bg-red-500 text-white py-1 rounded hover:bg-red-600"
+        class="absolute top-8 right-2 bg-white p-0.5 rounded-full shadow-md hover:bg-gray-200"
       >
-        削除
+        <!-- ゴミ箱アイコン (trash.svg) -->
+        <img src="/trash.svg" alt="Trash" class="w-3 h-3"/>
       </button>
+
+      <!-- 編集ボタン -->
+      <button
+        @click="editPhoto = photo" 
+        class="absolute top-14 right-2 bg-white p-0.5 rounded-full shadow-md hover:bg-gray-200"
+      >
+        <img src="/pen.svg" alt="Pen" class="w-3 h-3"/>
+      </button>
+      
+    
+      <!-- 画像下に説明文と評価 -->
+      <div class="flex flex-col justify-end absolute bottom-0 w-full bg-gradient-to-t from-black via-transparent to-transparent pt-16 text-white rounded-b">
+        <div class="text-yellow-500 text-xs">
+          <span v-for="n in 5" :key="n">
+            {{ n <= photo.rating ? '★' : '☆' }}
+          </span>
+        </div>
+        <p class="text-xs text-gray-200 break-words">{{ photo.description }}</p>
+      </div>
+
+      <!-- 撮影日 -->
+      <!-- <p class="text-sm text-gray-600 mt-2">
+        撮影日:
+        {{ photo.shootingDate ? photo.shootingDate.toLocaleDateString() : '未登録' }}
+      </p> -->
+
+      
     </div>
   </div>
-  <!-- 編集モーダルの表示 -->
-  <PhotoEditModal
-    v-if="editPhoto"
-    :photo="editPhoto"
-    @close="editPhoto = null"
-  />
 </template>
+
 
 
 <script setup>

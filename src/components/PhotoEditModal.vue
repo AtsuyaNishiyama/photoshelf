@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+  <div class="fixed inset-0 flex items-center justify-center bg-transparent z-50">
     <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
       <h2 class="text-xl font-bold mb-4">画像の編集</h2>
 
