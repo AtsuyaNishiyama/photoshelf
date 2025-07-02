@@ -1,74 +1,95 @@
 <template>
   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-    <div v-for="photo in photos" :key="photo.id" class="rounded shadow relative">
+    <div v-for="photo in photos" :key="photo.id" class="relative">
       <!-- 画像部分 -->
-      <img
-        :src="photo.imageUrl"
-        alt="uploaded"
-        class="w-full h-40 object-cover rounded"
-      />
+      <div class="w-full max-w-[290px] h-[200px] mx-auto overflow-hidden rounded relative">
+        <img
+          :src="photo.imageUrl"
+          class="w-full h-full object-cover"
+          @click="detailedPhoto = photo"
+        />
 
-      <!-- 右上にGoogle MapsのSVGピンアイコン（pin.svg） -->
-      <a
-        :href="`https://www.google.com/maps/search/?api=1&query=${photo.location.lat},${photo.location.lng}`"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="absolute top-2 right-2 bg-white p-0.5 rounded-full shadow-md hover:bg-gray-200"
-      >
-        <!-- pin.svg を表示 -->
-        <img src="/pin.svg" alt="Map Pin" class="w-3 h-3 text-red-500" />
-      </a>
+        <!-- 三点リーダー -->
+        <button
+          @click="toggleMenu(photo.id)"
+          class="absolute top-2 right-2 bg-white p-0.5 rounded-full shadow-md hover:bg-gray-200 z-20"
+        >
+          <img v-if="menuOpen !== photo.id" src="/dots.svg" class="w-3 h-3" />
+          <img v-else src="/close.svg" class="w-3 h-3" />
+        </button>
 
-      <!-- ゴミ箱アイコン（マップアイコンの下に追加） -->
-      <button
-        @click="deletePhoto(photo)"
-        class="absolute top-8 right-2 bg-white p-0.5 rounded-full shadow-md hover:bg-gray-200"
-      >
-        <!-- ゴミ箱アイコン (trash.svg) -->
-        <img src="/trash.svg" alt="Trash" class="w-3 h-3"/>
-      </button>
+        <!-- メニュー -->
+        <div
+          v-if="menuOpen === photo.id"
+          class="absolute top-10 right-2 bg-white rounded shadow-md flex flex-col space-y-1 p-1 z-20"
+        >
+          <a
+            :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(photo.address)}`"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center space-x-1 hover:bg-gray-100 p-1 rounded text-xs"
+          >
+            <img src="/pin.svg" alt="Map Pin" class="w-3 h-3" />
+            <span>地図</span>
+          </a>
 
-      <!-- 編集ボタン -->
-      <button
-        @click="editPhoto = photo" 
-        class="absolute top-14 right-2 bg-white p-0.5 rounded-full shadow-md hover:bg-gray-200"
-      >
-        <img src="/pen.svg" alt="Pen" class="w-3 h-3"/>
-      </button>
-      
-    
-      <!-- 画像下に説明文と評価 -->
-      <div class="flex flex-col justify-end absolute bottom-0 w-full bg-gradient-to-t from-black via-transparent to-transparent pt-16 text-white rounded-b">
-        <div class="text-yellow-500 text-xs">
-          <span v-for="n in 5" :key="n">
-            {{ n <= photo.rating ? '★' : '☆' }}
-          </span>
+          <button
+            @click="editPhoto = photo; menuOpen = null"
+            class="flex items-center space-x-1 hover:bg-gray-100 p-1 rounded text-xs"
+          >
+            <img src="/pen.svg" alt="Edit" class="w-3 h-3" />
+            <span>編集</span>
+          </button>
+          
+          <button
+            @click="deletePhoto(photo); menuOpen = null"
+            class="flex items-center space-x-1 hover:bg-gray-100 p-1 rounded text-xs text-red-500"
+          >
+            <img src="/trash.svg" alt="Trash" class="w-3 h-3" />
+            <span>削除</span>
+          </button>
         </div>
-        <p class="text-xs text-gray-200 break-words">{{ photo.description }}</p>
+
+        <!-- 評価 -->
+        <div
+          class="absolute bottom-0 w-full bg-gradient-to-t from-black via-transparent to-transparent text-white text-xs p-2 pointer-events-none"
+        >
+          <div class="text-yellow-500">
+            <span v-for="n in 5" :key="n">
+              {{ n <= photo.rating ? '★' : '☆' }}
+            </span>
+          </div>
+        </div>
       </div>
-
-      <!-- 撮影日 -->
-      <!-- <p class="text-sm text-gray-600 mt-2">
-        撮影日:
-        {{ photo.shootingDate ? photo.shootingDate.toLocaleDateString() : '未登録' }}
-      </p> -->
-
-      
     </div>
+      <PhotoEditModal v-if="editPhoto" :photo="editPhoto" @close="editPhoto = null" />
+      <PhotoDetailModal v-if="detailedPhoto" :photo="detailedPhoto" @close="detailedPhoto = null"/>
   </div>
 </template>
 
 
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { db } from '../firebase'
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc  } from 'firebase/firestore'
 import { deleteObject, ref as storageRef, getStorage } from 'firebase/storage'
 import PhotoEditModal from './PhotoEditModal.vue'
+import PhotoDetailModal from './PhotoDetailModal.vue'
 
 const photos = ref([])
 const editPhoto = ref(null)
+const menuOpen = ref(null)
+const detailedPhoto = ref(null)
+
+watch(detailedPhoto, (val) => {
+  console.log('モーダルに渡された photo:', val)
+  console.log('📸 detailedPhoto:', val)
+})
+
+const toggleMenu = (id) => {
+  menuOpen.value = menuOpen.value === id ? null : id
+}
 
 //photosを参照して、作成（createdAt）が新しい順に並べる
 const q = query(collection(db, 'photos'), orderBy('createdAt', 'desc'))

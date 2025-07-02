@@ -7,6 +7,7 @@ import { ref } from 'vue'
 import  Signup  from './components/Signup.vue'
 import PhotoFormModal from './components/PhotoFormModal.vue'
 import PhotoList from './components/PhotoList.vue'
+import Login from './components/Login.vue'
 
 const email = ref('')
 const password = ref('')
@@ -31,16 +32,11 @@ const logout = async () => {
 
 <template>
   <main class="flex items-center justify-center">
-    <div class="w-full bg-gradient-to-br from-blue-500 via-green-500 to-yellow-200  text-center">
+    <div class="w-full bg-blue-white text-center">
       
       <div v-if="currentUser" class="w-full bg-gray-800 text-white p-2">
         <div class="flex justify-between items-center">
-          <!-- 左側: Photoshelf -->
           <h1 class="text-3xl font-bold caprasimo-regular">Photoshelf</h1>
-          
-          <div class="text-sm caprasimo-regular">
-            <span> {{ currentUser.email }}</span>
-          </div>
 
           <div class="flex space-x-4">
             <!-- 登録ボタン -->
@@ -54,9 +50,9 @@ const logout = async () => {
             <!-- ログアウトボタン -->
             <button
               @click="logout"
-              class="bg-gray-400 text-white rounded px-4 py-2 hover:bg-gray-500 transition duration-200 ease-in-out"
+              class="bg-gray-400 text-white rounded p-2 hover:bg-gray-500 transition duration-200 ease-in-out"
             >
-              ログアウト
+              <img src="/logout.svg" alt="Logout" class="w-3 h-3" />
             </button>
           </div>
         </div>    
@@ -69,36 +65,13 @@ const logout = async () => {
       </div>
 
       <!-- サインアップ画面表示中 -->
-      <div v-else-if="!currentUser && isSignup">
-        <Signup />
-        <p><button @click="isSignup = false" class="text-blue-600 underline text-sm mt-4">ログインに戻る</button></p>
+      <div v-else-if="!currentUser && isSignup" class="px-8">
+        <Signup @backToLogin="isSignup = false" />
       </div>
 
       <!-- ログインしていないとき -->
-      <div v-else-if="!currentUser" class="bg-white p-6 rounded">
-        <h1 class="text-3xl caprasimo-regular font-bold">Photoshelf</h1>
-        <form @submit.prevent="login" class="space-y-4">
-          <input
-            v-model="email"
-            type="email"
-            placeholder="メールアドレス"
-            class="w-full px-3 py-2 border rounded"
-          />
-          <input
-            v-model="password"
-            type="password"
-            placeholder="パスワード"
-            class="w-full px-3 py-2 border rounded"
-          />
-          <button
-            type="submit"
-            class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Login
-          </button>
-        </form>
-        <p><button @click="isSignup = true" class="text-blue-600 underline text-sm mt-4">アカウントをお持ちでない方はこちら</button></p>
-        <p v-if="error" class="text-red-500 mt-2">{{ error }}</p>
+      <div v-else-if="!currentUser && !isSignup && isAuthReady" class="px-8">
+        <Login @showSignup="isSignup = true" />
       </div>
 
       <!-- ログイン済みのとき -->
@@ -110,9 +83,6 @@ const logout = async () => {
       <PhotoList v-if="currentUser" />
     </div>
   </main>
-
-   
-
 </template>
 
 <style>

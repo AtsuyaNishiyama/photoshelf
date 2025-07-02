@@ -1,16 +1,24 @@
 <template>
-  <div class="fixed inset-0 flex items-center justify-center bg-transparent z-50">
-    <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div class="bg-white p-6 rounded shadow-lg w-full max-w-[90vw] max-h-[90vh] overflow-y-auto">
       <h2 class="text-xl font-bold mb-4">画像アップロード</h2>
 
-      <input type="file" accept="image/*" @change="handleFileChange" class="mb-4" />
+      <div v-if="imagePreviewUrl" class="flex items-center justify-center mb-4">
+        <img :src="imagePreviewUrl" alt="プレビュー" class="max-h-[30vw] object-contain rounded shadow" />
+      </div>
 
-      <div class="flex items-center space-x-1 mt-4">
+      <input 
+        type="file" 
+        accept="image/*" 
+        @change="handleFileChange" 
+      />
+
+      <div class="flex items-center justify-center space-x-1 mt-4">
         <span
           v-for="n in 5"
           :key="n"
           @click="rating = n"
-          class="cursor-pointer text-2xl"
+          class="cursor-pointer text-2xl text-yellow-500"
         >
           {{ n <= rating ? '★' : '☆' }}
         </span>
@@ -69,6 +77,8 @@ const emit = defineEmits(['close'])
 const address = ref('')
 const rating = ref(5) 
 const shootingDate = ref(null) 
+const selectedImage = ref(null)
+const imagePreviewUrl = ref(null)
 
 
 
@@ -100,6 +110,12 @@ const getCoordinatesFromAddress = async (addressText) => {
 
 const handleFileChange = (e) => {
   file.value = e.target.files[0]
+  if (file) {
+    selectedImage.value = file.value
+    imagePreviewUrl.value = URL.createObjectURL(file.value)
+  } else {
+    imagePreviewUrl.value = null
+  }
 }
 
 //登録ボタンがクリックされたら、実行される関数

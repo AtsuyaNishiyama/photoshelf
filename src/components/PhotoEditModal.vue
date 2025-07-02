@@ -1,9 +1,18 @@
 <template>
-  <div class="fixed inset-0 flex items-center justify-center bg-transparent z-50">
-    <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
-      <h2 class="text-xl font-bold mb-4">画像の編集</h2>
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div class="bg-white p-6 rounded shadow-lg w-full max-w-[90vw] max-h-[90vh] overflow-y-auto sm:w-[500px] relative">
+      <button
+        @click="$emit('close')"
+        class="absolute top-2 right-2 bg-gray-300 p-2 rounded-full shadow-2xl hover:bg-gray-400 hover:scale-105 transition-transform duration-150"
+      >
+        <img src="/close.svg" alt="閉じる" class="w-4 h-4" />
+      </button>
 
-      <img :src="photo.imageUrl" alt="photo" class="w-full h-40 object-cover rounded mb-4" />
+      <img 
+        :src="photo.imageUrl" 
+        alt="photo" 
+        class="w-full h-auto max-h-[300px] object-contain rounded mb-4"
+      />
 
       <input
           type="file"
@@ -12,18 +21,15 @@
           class="mb-4"
       />
 
-      <div class="mb-4">
-        <p class="text-sm font-semibold mb-1">評価（1〜5）</p>
-        <div class="text-yellow-500 text-xl">
-          <span
-            v-for="n in 5"
-            :key="n"
-            class="cursor-pointer"
-            @click="newRating = n"
-          >
-            {{ n <= newRating ? '★' : '☆' }}
-          </span>
-        </div>
+      <div class="text-yellow-500 text-xl mb-4">
+        <span
+          v-for="n in 5"
+          :key="n"
+          class="cursor-pointer"
+          @click="newRating = n"
+        >
+          {{ n <= newRating ? '★' : '☆' }}
+        </span>
       </div>
 
       <input
@@ -33,10 +39,10 @@
       />
 
       <textarea
-          v-model="newDescription"
-          placeholder="説明文を編集"
-          class="w-full p-2 border rounded mb-4"
-          rows="3"
+        v-model="newDescription"
+        placeholder="説明文を編集"
+        class="w-full p-2 border rounded mb-4"
+        rows="3"
       />
 
       <input
@@ -46,8 +52,7 @@
         class="w-full p-2 border rounded mb-4"
       />
 
-      <div class="flex justify-end space-x-2">
-        <button @click="$emit('close')" class="px-4 py-2 bg-gray-300 rounded">キャンセル</button>
+      <div class="flex justify-end">
         <button @click="updatePhoto" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
           保存
         </button>
