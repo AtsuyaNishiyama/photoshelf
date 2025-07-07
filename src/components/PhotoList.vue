@@ -1,6 +1,6 @@
 <template>
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-    <div v-for="photo in photos" :key="photo.id" class="relative">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 min-h-screen bg-blue-100">
+    <div v-for="photo in photos" :key="photo.id" class="relative ">
       <!-- 画像部分 -->
       <div class="w-full max-w-[290px] h-[200px] mx-auto overflow-hidden rounded relative">
         <img
@@ -71,11 +71,13 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { db } from '../firebase'
+import { db, auth } from '../firebase'
+import { onAuthStateChanged } from 'firebase/auth'
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc  } from 'firebase/firestore'
 import { deleteObject, ref as storageRef, getStorage } from 'firebase/storage'
 import PhotoEditModal from './PhotoEditModal.vue'
 import PhotoDetailModal from './PhotoDetailModal.vue'
+import { where } from 'firebase/firestore'
 
 const photos = ref([])
 const editPhoto = ref(null)
@@ -91,28 +93,31 @@ const toggleMenu = (id) => {
   menuOpen.value = menuOpen.value === id ? null : id
 }
 
-//photosを参照して、作成（createdAt）が新しい順に並べる
-const q = query(collection(db, 'photos'), orderBy('createdAt', 'desc'))
-
 //unsubscribeはFirestoreの監視を解除する関数を保持する変数
 let unsubscribe = null
 
 onMounted(() => {
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const q = query(
+        collection(db, 'photos'),
+        where('uid', '==', user.uid),
+        orderBy('createdAt', 'desc')
+      )
 
-  //Firestoreのドキュメントであるphotosに変化があった際、自動で実行される
-  unsubscribe = onSnapshot(q, (snapshot) => {
-    //再度photosの値を再代入する
-    photos.value = snapshot.docs.map(doc => {
-      const data = doc.data();
-
-      return {
-        id: doc.id,
-        ...data,
-        shootingDate: data.shootingDate?.toDate?.() ?? null
-      };
-    });
-  });  
- })
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        photos.value = snapshot.docs.map(doc => {
+          const data = doc.data()
+          return {
+            id: doc.id,
+            ...data,
+            shootingDate: data.shootingDate?.toDate?.() ?? null
+          }
+        })
+      })
+    }
+  })
+})
 
 onUnmounted(() => {
   if (unsubscribe) unsubscribe()

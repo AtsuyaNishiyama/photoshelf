@@ -68,6 +68,7 @@ import { storage } from '../firebase'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db } from '../firebase'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { getAuth } from 'firebase/auth'
 
 const file = ref(null)
 const uploading = ref(false)
@@ -79,6 +80,7 @@ const rating = ref(5)
 const shootingDate = ref(null) 
 const selectedImage = ref(null)
 const imagePreviewUrl = ref(null)
+const auth = getAuth()
 
 
 
@@ -139,6 +141,7 @@ const handleCreatePhoto = async () => {
 
     // Firestore に画像情報を保存
     await addDoc(collection(db, 'photos'), {
+      uid: auth.currentUser.uid,
       imageUrl: url,
       imagePath: path, // FirestorageのURLを保存
       description: description.value, 
