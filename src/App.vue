@@ -4,6 +4,8 @@ import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from './firebase'
 import { signOut } from 'firebase/auth'
 import { ref } from 'vue'
+import { onMounted, onBeforeUnmount, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import  Signup  from './components/Signup.vue'
 import PhotoFormModal from './components/PhotoFormModal.vue'
 import PhotoList from './components/PhotoList.vue'
@@ -28,6 +30,53 @@ const login = async () => {
 const logout = async () => {
   await signOut(auth)
 }
+
+const router = useRouter()
+let idleTimer = null
+
+// 自動ログアウト処理
+const handleAutoLogout = async () => {
+  await logout()
+  alert('15分間操作がなかったため、自動的にログアウトしました。')
+  router.push('/login')
+}
+
+// タイマーリセット処理
+const resetIdleTimer = () => {
+  clearTimeout(idleTimer)
+  idleTimer = setTimeout(() => {
+    handleAutoLogout()
+  }, 15 * 60 * 1000) // 15分
+}
+
+// 監視対象のイベント
+const idleEvents = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart']
+
+onMounted(() => {
+  // currentUser がログイン済みのときのみタイマーを動作
+  watch(currentUser, (user) => {
+    if (user) {
+      // 初期タイマー設定
+      resetIdleTimer()
+      idleEvents.forEach(event =>
+        window.addEventListener(event, resetIdleTimer)
+      )
+    } else {
+      // ログアウトしたらタイマー停止
+      clearTimeout(idleTimer)
+      idleEvents.forEach(event =>
+        window.removeEventListener(event, resetIdleTimer)
+      )
+    }
+  }, { immediate: true })
+})
+
+onBeforeUnmount(() => {
+  clearTimeout(idleTimer)
+  idleEvents.forEach(event =>
+    window.removeEventListener(event, resetIdleTimer)
+  )
+})
 </script>
 
 <template>
