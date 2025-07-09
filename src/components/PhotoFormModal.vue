@@ -133,6 +133,7 @@ const handleCreatePhoto = async () => {
 
 
   try {
+    console.log('ログイン中ユーザー:', auth.currentUser);
     const path = `images/${Date.now()}_${file.value.name}`
     const imageRef = storageRef(storage, path)
     await uploadBytes(imageRef, file.value)
