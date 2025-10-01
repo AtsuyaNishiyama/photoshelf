@@ -24,7 +24,7 @@
           class="absolute top-10 right-2 bg-white rounded shadow-md flex flex-col space-y-1 p-1 z-20"
         >
           <a
-            :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(photo.address)}`"
+            :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(photo.address ?? '')}`"
             target="_blank"
             rel="noopener noreferrer"
             class="flex items-center space-x-1 hover:bg-gray-100 p-1 rounded text-xs"
@@ -62,39 +62,56 @@
         </div>
       </div>
     </div>
-      <PhotoEditModal v-if="editPhoto" :photo="editPhoto" @close="editPhoto = null" />
-      <PhotoDetailModal v-if="detailedPhoto" :photo="detailedPhoto" @close="detailedPhoto = null"/>
+
+    <PhotoEditModal v-if="editPhoto" :photo="editPhoto" @close="editPhoto = null" />
+    <PhotoDetailModal v-if="detailedPhoto" :photo="detailedPhoto" @close="detailedPhoto = null"/>
   </div>
 </template>
 
-
-
-<script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { db, auth } from '../firebase'
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, watch, type Ref } from 'vue'
+import { db, auth } from '@/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc  } from 'firebase/firestore'
+import {
+  collection, query, orderBy, onSnapshot, deleteDoc, doc, where,
+  type DocumentData, type Timestamp, type Unsubscribe
+} from 'firebase/firestore'
 import { deleteObject, ref as storageRef, getStorage } from 'firebase/storage'
-import PhotoEditModal from './PhotoEditModal.vue'
-import PhotoDetailModal from './PhotoDetailModal.vue'
-import { where } from 'firebase/firestore'
+import PhotoEditModal from '@/PhotoEditModal.vue'
+import PhotoDetailModal from '@/PhotoDetailModal.vue'
 
-const photos = ref([])
-const editPhoto = ref(null)
-const menuOpen = ref(null)
-const detailedPhoto = ref(null)
+/** 将来の安定運用のためのドメイン型（最低限） */
+export type Rating = 1 | 2 | 3 | 4 | 5
+
+export interface Photo {
+  id: string
+  uid: string
+  imageUrl: string
+  rating: Rating
+  address?: string
+  imagePath?: string
+  /** 日付UIで使いやすいように変換後を保持（存在しない場合は null） */
+  shootingDate: Date | null
+  /** Firestoreフィールドは他にもあり得るので拡張余地を残す */
+  [key: string]: unknown
+}
+
+const photos: Ref<Photo[]> = ref([])
+const editPhoto: Ref<Photo | null> = ref(null)
+const menuOpen: Ref<string | null> = ref(null)
+const detailedPhoto: Ref<Photo | null> = ref(null)
 
 watch(detailedPhoto, (val) => {
   console.log('モーダルに渡された photo:', val)
   console.log('📸 detailedPhoto:', val)
 })
 
-const toggleMenu = (id) => {
+const toggleMenu = (id: string) => {
   menuOpen.value = menuOpen.value === id ? null : id
 }
 
-//unsubscribeはFirestoreの監視を解除する関数を保持する変数
-let unsubscribe = null
+// Firestoreの購読解除関数
+let unsubscribe: Unsubscribe | null = null
 
 onMounted(() => {
   onAuthStateChanged(auth, (user) => {
@@ -106,13 +123,24 @@ onMounted(() => {
       )
 
       unsubscribe = onSnapshot(q, (snapshot) => {
-        photos.value = snapshot.docs.map(doc => {
-          const data = doc.data()
+        photos.value = snapshot.docs.map((d) => {
+          // Firestore 生データ（shootingDateがTimestampの可能性を考慮）
+          const data = d.data() as DocumentData & { shootingDate?: Timestamp; rating?: number }
+
+          // rating は 1..5 の範囲に丸めて型アサート（必要なら厳密化可）
+          const rawRating = Number(data.rating ?? 0)
+          const rating = (Math.min(5, Math.max(1, rawRating)) || 1) as Rating
+
           return {
-            id: doc.id,
-            ...data,
-            shootingDate: data.shootingDate?.toDate?.() ?? null
-          }
+            id: d.id,
+            uid: String(data.uid ?? ''),
+            imageUrl: String(data.imageUrl ?? ''),
+            rating,
+            address: data.address ? String(data.address) : undefined,
+            imagePath: data.imagePath ? String(data.imagePath) : undefined,
+            shootingDate: data.shootingDate?.toDate?.() ?? null,
+            ...data
+          } as Photo
         })
       })
     }
@@ -123,18 +151,17 @@ onUnmounted(() => {
   if (unsubscribe) unsubscribe()
 })
 
-//削除ボタンがクリックされると実行される関数
-const deletePhoto = async (photo) => {
-  //削除実行前の確認
+/** 削除ボタンがクリックされたときに実行 */
+const deletePhoto = async (photo: Photo): Promise<void> => {
   const ok = window.confirm('この画像を削除してもよろしいですか？')
   if (!ok) return
 
   try {
     // Firestorage の画像を削除
     if (photo.imagePath) {
-      const storage = getStorage() //Firestorageの情報（インスタンス）を取得
-      const imageRef = storageRef(storage, photo.imagePath) //削除する画像のFirestorage内のファイルパス（参照先）を作成
-      await deleteObject(imageRef) //参照先を引数に削除の実行
+      const storage = getStorage()
+      const imageRef = storageRef(storage, photo.imagePath)
+      await deleteObject(imageRef)
     }
 
     // Firestore のドキュメントを削除

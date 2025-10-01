@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    // --- Target / Module ---
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+
+    // --- Strictness / DX ---
+    "strict": true,
+    "jsx": "preserve",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "useDefineForClassFields": true,
+    "skipLibCheck": true,
+
+    // --- Types / Vite ---
+    "types": ["vite/client", "node"],
+
+    // --- Path alias (@/) ---
+    "baseUrl": ".",
+    "paths": { "@/*": ["src/*"] }
+
+    // ※ アプリ用途なら型定義出力は不要：
+    // "declaration": false,
+    // "declarationMap": false
+  },
+  "include": ["src", "env.d.ts"]
+}
+
