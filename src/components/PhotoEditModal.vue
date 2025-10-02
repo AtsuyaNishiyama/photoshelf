@@ -43,7 +43,7 @@
         placeholder="説明文を編集"
         class="w-full p-2 border rounded mb-4"
         rows="3"
-      />
+      ></textarea>
 
       <input
         v-model="newAddress"

@@ -35,7 +35,7 @@
         placeholder="説明文を入力してください"
         class="w-full p-2 border rounded mt-4"
         rows="2"
-      />
+      ></textarea>
 
       <input
         v-model="address"
