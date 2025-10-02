@@ -77,8 +77,8 @@ import {
   type DocumentData, type Timestamp, type Unsubscribe
 } from 'firebase/firestore'
 import { deleteObject, ref as storageRef, getStorage } from 'firebase/storage'
-import PhotoEditModal from '@/PhotoEditModal.vue'
-import PhotoDetailModal from '@/PhotoDetailModal.vue'
+import PhotoEditModal from '@/components/PhotoEditModal.vue'
+import PhotoDetailModal from '@/components/PhotoDetailModal.vue'
 
 /** 将来の安定運用のためのドメイン型（最低限） */
 export type Rating = 1 | 2 | 3 | 4 | 5
