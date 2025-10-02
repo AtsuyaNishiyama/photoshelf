@@ -10,7 +10,7 @@ import Signup from '@/components/Signup.vue'
 import PhotoFormModal from '@/components/PhotoFormModal.vue'
 import PhotoList from '@/components/PhotoList.vue'
 import Login from '@/components/Login.vue'
-
+console.log('test')
 const email = ref<string>('')
 const password = ref<string>('')
 const error = ref<string>('')
