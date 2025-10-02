@@ -1,23 +1,23 @@
-<script setup>
-import { currentUser , isAuthReady } from './stores/user'
+<script setup lang="ts">
+import { currentUser , isAuthReady } from '@/stores/user'
 import { signInWithEmailAndPassword } from 'firebase/auth'
-import { auth } from './firebase'
+import { auth } from '@/firebase'
 import { signOut } from 'firebase/auth'
 import { ref } from 'vue'
 import { onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import  Signup  from './components/Signup.vue'
-import PhotoFormModal from './components/PhotoFormModal.vue'
-import PhotoList from './components/PhotoList.vue'
-import Login from './components/Login.vue'
+import Signup from '@/components/Signup.vue'
+import PhotoFormModal from '@/components/PhotoFormModal.vue'
+import PhotoList from '@/components/PhotoList.vue'
+import Login from '@/components/Login.vue'
 
-const email = ref('')
-const password = ref('')
-const error = ref('')
-const isSignup = ref(false)
-const showModal = ref(false)
+const email = ref<string>('')
+const password = ref<string>('')
+const error = ref<string>('')
+const isSignup = ref<boolean>(false)
+const showModal = ref<boolean>(false)
 
-const login = async () => {
+const login = async():Promise<void> => {
   error.value = ''
   try {
     await signInWithEmailAndPassword(auth, email.value, password.value)
@@ -27,15 +27,15 @@ const login = async () => {
   }
 }
 
-const logout = async () => {
+const logout = async ():Promise<void> => {
   await signOut(auth)
 }
 
 const router = useRouter()
-let idleTimer = null
+let idleTimer: number | undefined
 
 // 自動ログアウト処理
-const handleAutoLogout = async () => {
+const handleAutoLogout = async ():Promise<void> => {
   await logout()
   alert('15分間操作がなかったため、自動的にログアウトしました。')
   router.push('/login')
@@ -43,14 +43,22 @@ const handleAutoLogout = async () => {
 
 // タイマーリセット処理
 const resetIdleTimer = () => {
+  if(idleTimer !== undefined){
   clearTimeout(idleTimer)
-  idleTimer = setTimeout(() => {
-    handleAutoLogout()
+  }
+  idleTimer = window.setTimeout(() => {
+   void handleAutoLogout()
   }, 15 * 60 * 1000) // 15分
 }
 
 // 監視対象のイベント
-const idleEvents = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart']
+const idleEvents : Array<keyof WindowEventMap> = [
+  'mousemove', 
+  'mousedown', 
+  'keypress', 
+  'scroll', 
+  'touchstart'
+]
 
 onMounted(() => {
   // currentUser がログイン済みのときのみタイマーを動作
