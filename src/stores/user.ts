@@ -1,9 +1,9 @@
 import { ref } from 'vue'
 import type { User } from 'firebase/auth'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import {auth} from '@/firebase'
 
 // Firebase 認証インスタンスを取得
-const auth = getAuth()
 
 // 現在のユーザー（ログインしていなければ null）
 export const currentUser = ref<User | null>(null)
