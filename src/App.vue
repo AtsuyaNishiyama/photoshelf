@@ -16,7 +16,7 @@ const password = ref<string>('')
 const error = ref<string>('')
 const isSignup = ref<boolean>(false)
 const showModal = ref<boolean>(false)
-
+console.log('test')
 const login = async():Promise<void> => {
   error.value = ''
   try {
