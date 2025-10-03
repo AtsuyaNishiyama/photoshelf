@@ -40,14 +40,22 @@
   </div>
 </template>
 
-<script setup>
-defineProps({
-  photo: Object
-})
+<script setup lang="ts">
+type Rating = 1 | 2 | 3 | 4 | 5
 
-const formatDate = (date) => {
+interface Photo {
+  imageUrl: string
+  rating: Rating
+  shootingDate: Date | null
+  description?: string
+  address?: string
+}
+
+const props = defineProps<{ photo: Photo }>()
+defineEmits<{ (e: 'close'): void }>()
+
+function formatDate(date: Date | null): string {
   if (!date) return '未登録'
-  if (typeof date.toDate === 'function') date = date.toDate()
-  return date instanceof Date ? date.toLocaleDateString() : String(date)
+  return date.toLocaleDateString()
 }
 </script>

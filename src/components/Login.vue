@@ -25,24 +25,24 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { ref,type Ref } from 'vue'
 import { signInWithEmailAndPassword } from 'firebase/auth'
-import { auth } from '../firebase'
+import { auth } from '@/firebase'
 
-const emit = defineEmits(['showSignup']) // App.vue に通知する
+defineEmits<{ (e: 'showSignup'): void }>()// App.vue に通知する
 
-const email = ref('')
-const password = ref('')
-const error = ref('')
+const email: Ref<string>  = ref('')
+const password: Ref<string> = ref('')
+const error: Ref<string> = ref('')
 
-const handleLogin = async () => {
+const handleLogin = async (): Promise<void> => {
   error.value = ''
   try {
     await signInWithEmailAndPassword(auth, email.value, password.value)
-  } catch (err) {
+  } catch (e:unknown) {
     error.value = 'ログインに失敗しました'
-    console.error(err)
+    console.error(e)
   }
 }
 </script>

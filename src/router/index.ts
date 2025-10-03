@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import LoginForm from '../components/LoginForm.vue'
+import LoginForm from '@/components/Login.vue'
+import IndexView from '@/views/index.vue'
 
 const routes = [
   { path: '/login', component: LoginForm },
-  // 他のルート...
+  { path: '/', component: IndexView }
 ]
 
 const router = createRouter({

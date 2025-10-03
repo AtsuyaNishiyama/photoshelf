@@ -36,26 +36,25 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { ref, type Ref } from 'vue'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
-import { auth } from '../firebase'
+import { auth } from '@/firebase'
 
-const email = ref('')
-const password = ref('')
-const error = ref('')
+defineEmits<{ (e: 'backToLogin'): void }>()
 
-const signup = async () => {
+const email: Ref<string> = ref('')
+const password: Ref<string> = ref('')
+const error: Ref<string> = ref('')
+
+const signup = async (): Promise<void> => {
   error.value = ''
   try {
     await createUserWithEmailAndPassword(auth, email.value, password.value)
     alert('ユーザー登録が完了しました')
-  } catch (err) {
+  } catch(e: unknown) {
     error.value = '登録に失敗しました'
-    console.error(err)
+    console.error(e)
   }
 }
-
-defineEmits(['backToLogin'])
 </script>
-

@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    // --- Target / Module ---
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "baseUrl": "src",
+    "paths": {
+    "@/*": ["*"]
+    },
+    // --- Strictness / DX ---
+    "strict": true,
+    "jsx": "preserve",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "useDefineForClassFields": true,
+    "skipLibCheck": true,
+
+    // --- Types / Vite ---
+    "types": ["vite/client", "node"],
+
+    "allowJs": true,
+    "checkJs": false,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+  },
+  
+  "include": ["src/**/*.ts","src/**/*.d.ts","src/**/*.vue","src/env.d.ts"]
+}
+
