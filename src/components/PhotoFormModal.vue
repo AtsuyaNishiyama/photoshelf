@@ -35,7 +35,7 @@
         placeholder="説明文を入力してください"
         class="w-full p-2 border rounded mt-4"
         rows="2"
-      />
+      ></textarea>
 
       <input
         v-model="address"
@@ -62,110 +62,158 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { ref, onBeforeUnmount, computed } from 'vue'
 import { storage } from '../firebase'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db } from '../firebase'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
+import { Script } from 'vm'
 
-const file = ref(null)
-const uploading = ref(false)
-const error = ref('')
-const description = ref('')
-const emit = defineEmits(['close'])
-const address = ref('')
-const rating = ref(5) 
-const shootingDate = ref(null) 
-const selectedImage = ref(null)
-const imagePreviewUrl = ref(null)
+const file = ref<File | null>(null)
+const uploading = ref<boolean>(false)
+const error = ref<string>('')
+const description = ref<string>('')
+
+const address = ref<string>('')
+const rating = ref<number>(5) 
+const shootingDate = ref<Date | null>(null) 
+const selectedImage = ref<File | null>(null)
+const imagePreviewUrl = ref<string | null>(null)
+let objectUrl: string | null = null
+const imagePreviewSrc = computed<string | undefined>(() => imagePreviewUrl.value || undefined)
 const auth = getAuth()
 
-
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
 
 //APIキーの取得
-const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string
 
+//YYYY-MM-DDの形式で保存
+function dateToInputValue(d: Date | null): string {
+  if (!d) return ''
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+//YYYY-MM-DDの形式で出力
+function inputValueToDate(v: string): Date | null {
+  if (!v) return null
+  const [y, m, d] = v.split('-').map(Number)
+  if (!y || !m || !d) return null
+  return new Date(y, m - 1, d)
+}
 
-const getCoordinatesFromAddress = async (addressText) => {
+type LatLng = {
+  lat: number
+  lng: number
+}
 
-  //  TODO: Google Maps APIキーをCloud Functions経由に切り替える
+const getCoordinatesFromAddress = async (addressText: string): Promise<LatLng> => {
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${GOOGLE_API_KEY}`
-
-  //Google Maps API に住所を送って、返ってきた生データをresと定義
   const res = await fetch(url)
-  //生データをJSON形式に変換
-  const data = await res.json()
-
-  console.log('住所変換APIレスポンス:', data) 
-
-  if (data.status === 'OK') {
-    //JSONデータの一番目の.geometry.locationをlocationで定義
-    const location = data.results[0].geometry.location
-    return location // { lat: ..., lng: ... }
-  } else {
-    throw new Error('住所の変換に失敗しました')
+  const data = await res.json() as {
+    status: string
+    results: Array<{ geometry: { location: LatLng } }>
   }
+
+  console.log('住所変換APIレスポンス:', data)
+
+  if (data.status === 'OK' && data.results?.length) {
+    return data.results[0].geometry.location
+  }
+  throw new Error('住所の変換に失敗しました')
 }
 
 
-const handleFileChange = (e) => {
-  file.value = e.target.files[0]
-  if (file) {
-    selectedImage.value = file.value
-    imagePreviewUrl.value = URL.createObjectURL(file.value)
-  } else {
-    imagePreviewUrl.value = null
+// ---- 画像選択＆プレビュー ----
+function handleFileChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  const picked = input.files?.[0] ?? null
+  file.value = picked
+  selectedImage.value = picked
+
+  if (objectUrl) {
+    URL.revokeObjectURL(objectUrl)
+    objectUrl = null
   }
+  imagePreviewUrl.value = picked ? (objectUrl = URL.createObjectURL(picked)) : null
 }
 
-//登録ボタンがクリックされたら、実行される関数
-const handleCreatePhoto = async () => {
-  //ファイルの値がないなら実行
+onBeforeUnmount(() => {
+  if (objectUrl) URL.revokeObjectURL(objectUrl)
+})
+
+// ---- 作成処理 ----
+const handleCreatePhoto = async (): Promise<void> => {
   if (!file.value) {
     error.value = 'ファイルを選択してください'
     return
   }
-  //uploadingの値をtrue・errorの値を空にする=>アップロード中と表示される
+  if (!auth.currentUser) {
+    error.value = 'ログインが必要です'
+    return
+  }
+
   uploading.value = true
   error.value = ''
 
-
   try {
-    console.log('ログイン中ユーザー:', auth.currentUser);
+    console.log('ログイン中ユーザー:', auth.currentUser)
+
+    // Storage へアップロード
     const path = `images/${Date.now()}_${file.value.name}`
     const imageRef = storageRef(storage, path)
     await uploadBytes(imageRef, file.value)
     const url = await getDownloadURL(imageRef)
-    const location = await getCoordinatesFromAddress(address.value)
 
-    // Firestore に画像情報を保存
+    // 住所→緯度経度（住所が未入力ならnull）
+    let location:LatLng | null = null
+    if (address.value.trim()) {
+      try {
+        location = await getCoordinatesFromAddress(address.value.trim())
+      } catch (e) {
+        console.warn('住所のジオコーディングに失敗しましたが続行します。', e)
+      }
+    }
+
+    // Firestore に保存（shootingDate は Timestamp|null に変換）
     await addDoc(collection(db, 'photos'), {
       uid: auth.currentUser.uid,
       imageUrl: url,
-      imagePath: path, // FirestorageのURLを保存
-      description: description.value, 
-      address: address.value,
-      location,
-      shootingDate: shootingDate.value ? new Date(shootingDate.value) : null,
-      rating: rating.value, 
-      createdAt: serverTimestamp()
+      imagePath: path,
+      description: description.value,
+      address: address.value || null,
+      location, // {lat,lng} | null
+      shootingDate: shootingDate.value ? Timestamp.fromDate(shootingDate.value) : null,
+      rating: rating.value,
+      createdAt: serverTimestamp(),
     })
 
-    //uploadingの値をfalse・fileの値をnull・errorの値を空にする=>初期値に戻す
+    // 後処理
     uploading.value = false
+    // 初期化
     file.value = null
+    selectedImage.value = null
+    if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null }
+    imagePreviewUrl.value = null
+    description.value = ''
+    address.value = ''
+    rating.value = 5
+    shootingDate.value = null
     error.value = ''
-    // 親に「完了した」ことを伝える=>ポップアップ画面が閉じる
+
+    // 親へ完了通知（モーダルを閉じる）
     emit('close')
   } catch (err) {
     console.error(err)
     error.value = 'アップロードに失敗しました'
   } finally {
     uploading.value = false
-    file.value = null
-    description.value = ''
   }
 }
 
