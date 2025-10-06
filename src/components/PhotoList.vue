@@ -139,7 +139,6 @@ onMounted(() => {
             address: data.address ? String(data.address) : undefined,
             imagePath: data.imagePath ? String(data.imagePath) : undefined,
             shootingDate: data.shootingDate?.toDate?.() ?? null,
-            ...data
           } as Photo
         })
       })
